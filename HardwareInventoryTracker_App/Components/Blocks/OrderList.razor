@@ -1,0 +1,15 @@
+This is the order history
+
+it will be filterable, sortable, allow fulfillment of orders;
+if parameter given for a specific item, it will show only the history for that item, in reverse orderdate 
+if parameter given for only open orders, list will show only open orders
+@code {
+
+[Parameter]
+public int? ItemId {get;set;}
+
+[Parameter]
+public bool ShowOpenOrders {get;set;} = false;
+
+
+}

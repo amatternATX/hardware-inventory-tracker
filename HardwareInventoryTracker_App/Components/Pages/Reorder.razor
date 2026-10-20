@@ -1,0 +1,77 @@
+@page "/Reorder"
+@rendermode InteractiveServer
+
+@using HardwareInventoryTracker_App.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<HardwareInventoryManagerContext> DbFactory
+@inject NavigationManager NavManager
+
+@if(item is not null) {
+<h1>Reorder for Item @item.Name</h1>
+<div>@item.Category.CategoryName</div>
+<div><img src="@item.ProductImageUrl" class="image-thumbnail" /></div>
+<div><a href=@item.ReorderLink" target="_blank">click to order</a></div>
+<div>Suggested order is @item.SuggestedOrder units</div>
+}
+
+@if(openOrders?.Count > 0)
+{
+    <div class="text-danger">There @(openOrders.Count == 1 ? "is" : "are") @openOrders.Count open order@(openOrders.Count == 1 ? "" : "s"), would you like to fulfill one?</div>
+    <div>show open order list</div>
+}
+
+<div>Units ordered: <input type="number" @bind="unitsOrdered" @bind:event="oninput" min="1" /> </div>
+<div>Cost per unit: <input type="decimal" @bind="cost" @bind:event="oninput" /> </div>
+<div>Total: @TotalCost</div>
+
+<button class="btn btn-primary" @onclick="createOrder">Create order</button>
+
+@code {
+
+        [Parameter]
+        [SupplyParameterFromQuery]
+        public int? id {get;set;}
+    private HardwareItem? item;
+    private IList<OrderHistory>? openOrders;
+
+    private int unitsOrdered = 0;
+    private decimal cost = 0;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        using (var context = DbFactory.CreateDbContext()) {
+            item = await context.HardwareItems.Include(i => i.Category).Where(i => i.Id == id).FirstOrDefaultAsync();
+            openOrders = await context.OrderHistories.Where(o => o.HardwareItemId == id && o.FulfillmentDate.HasValue == false).ToListAsync();
+        }
+
+    }  
+
+    protected decimal TotalCost {
+        get {
+            return cost * unitsOrdered;
+        }
+    }
+
+    protected async Task createOrder()
+    {
+        //check other fields - needs form validation
+        if(id.HasValue) {
+        using (var context = DbFactory.CreateDbContext())
+        {
+            var order = new OrderHistory()
+            {
+                HardwareItemId = id.Value,
+                OrderDate = DateOnly.FromDateTime(DateTime.Now),
+                OrderQuantity = unitsOrdered,
+                OrderPrice = cost,
+                OrderTotal = TotalCost
+            };
+
+            await context.OrderHistories.AddAsync(order);
+            await context.SaveChangesAsync();
+
+            NavManager.NavigateTo("/ordermanager");
+        }
+        }
+    }
+}
