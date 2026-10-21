@@ -71,8 +71,8 @@ public partial class HardwareInventoryManagerContext : DbContext
             entity.ToTable("OrderHistory");
 
             entity.Property(e => e.HardwareItemId).HasColumnName("HardwareItem_Id");
-            entity.Property(e => e.OrderPrice).HasColumnType("decimal(18, 0)");
-            entity.Property(e => e.OrderTotal).HasColumnType("decimal(18, 0)");
+            entity.Property(e => e.OrderPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.OrderTotal).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.HardwareItem).WithMany(p => p.OrderHistories)
                 .HasForeignKey(d => d.HardwareItemId)

@@ -11,6 +11,9 @@ builder.Services.AddRazorComponents()
 var connectionString = builder.Configuration.GetConnectionString("InventoryDb");
 builder.Services.AddDbContextFactory<HardwareInventoryManagerContext>(options => options.UseSqlServer(connectionString));
 
+builder.Services.AddScoped<OrderHistoryRepo>();
+builder.Services.AddScoped<HardwareItemRepo>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

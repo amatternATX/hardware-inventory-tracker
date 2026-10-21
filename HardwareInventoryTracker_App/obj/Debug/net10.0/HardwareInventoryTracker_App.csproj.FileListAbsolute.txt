@@ -220,3 +220,4 @@
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/compressed/1x45lb54o8-{0}-boiwgh0w5b-boiwgh0w5b.gz
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/compressed/jng2e1ty92-{0}-g9w2un1bf5-g9w2un1bf5.gz
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/Hardware.7B5426CC.Up2Date
+/Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/HardwareInventoryTracker_App.sourcelink.json

@@ -1,15 +1,81 @@
-This is the order history
+@using HardwareInventoryTracker_App.Models
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject OrderHistoryRepo orderHistoryRepo
+@rendermode InteractiveServer
 
-it will be filterable, sortable, allow fulfillment of orders;
-if parameter given for a specific item, it will show only the history for that item, in reverse orderdate 
-if parameter given for only open orders, list will show only open orders
+@if(orderResults.Any())
+{
+    
+
+<QuickGrid Items="orderResults">
+    <PropertyColumn Property="p => p.OrderDate" Sortable="true" Title="Order Date" />
+    <PropertyColumn Property="p => p.HardwareItem.Name" Sortable="true" Title="Name" />
+    <PropertyColumn Property="p => p.OrderQuantity" Sortable="true" Title="Units Ordered" />
+    <PropertyColumn Property="p => p.OrderPrice" Sortable="true" Title="Unit Price" />
+    <PropertyColumn Property="p => p.OrderTotal" Sortable="true" Title="Order Total" />
+    <TemplateColumn Title="Fulfillment Date">
+        @if (context.FulfillmentDate.HasValue)
+        {
+            @context.FulfillmentDate.ToString()
+        }
+        else
+        {
+            <button class="btn btn-text" @onclick="() => fulfillOrder(context.Id)">fulfill</button>
+        }
+
+    </TemplateColumn>
+</QuickGrid>
+} else
+{
+    <div><strong>no results found.</strong></div>
+}
 @code {
 
-[Parameter]
-public int? ItemId {get;set;}
+    [Parameter]
+    public int? HardwareItemId { get; set; }
 
-[Parameter]
-public bool ShowOpenOrders {get;set;} = false;
+    [Parameter]
+    public bool ShowOpenOrders { get; set; } = false;
+    [Parameter]
+    public int ShowTop {get;set;} = 0;
 
+    private List<OrderHistory> orders = new List<OrderHistory>();
+    private IQueryable<OrderHistory> orderResults = Enumerable.Empty<OrderHistory>().AsQueryable();
 
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshData();
+    }
+
+    private async Task RefreshData()
+    {
+        var ordersTemp = (await orderHistoryRepo.GetAllAsync()).ToAsyncEnumerable();
+
+        if(ShowOpenOrders)
+        {
+            ordersTemp = ordersTemp.Where(o => o.FulfillmentDate.HasValue == false);
+        }
+
+        if(HardwareItemId.HasValue)
+        {
+            ordersTemp = ordersTemp.Where(o => o.HardwareItemId == HardwareItemId);
+        }
+
+        if(ShowTop > 0)
+        {
+            ordersTemp = ordersTemp.Take(ShowTop);
+        }
+
+        orders = await ordersTemp.OrderByDescending(o => o.OrderDate).ToListAsync();
+
+        orderResults = orders.AsQueryable();
+
+    }
+    private async Task fulfillOrder(int orderId)
+    {
+        //should have business logic class
+        await orderHistoryRepo.FulFillOrder(orderId);
+        await RefreshData();
+        await InvokeAsync(StateHasChanged);
+    }
 }

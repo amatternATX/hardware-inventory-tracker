@@ -1,0 +1,76 @@
+@using HardwareInventoryTracker_App.Models
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject HardwareItemRepo hardwareItemRepo;
+@inject NavigationManager NavManager;
+@inject IJSRuntime JS;
+
+@rendermode InteractiveServer
+
+<QuickGrid Items="results" class="table table-striped table-sm">
+    <PropertyColumn Property="p => p.Name" Sortable="true"></PropertyColumn>
+    <PropertyColumn Property="p => p.Category.CategoryName" Sortable="true" Title="Category Name"></PropertyColumn>
+    <TemplateColumn Title="Quantity">
+        <span class="@(context.Quantity < context.ReorderThreshold ? "text-danger" : "")">
+            @context.Quantity
+        </span>
+        <button role="button" @onclick="() => decreaseQuantity(context.Id)" class="btn btn-text"> use </button>
+    </TemplateColumn>
+    <TemplateColumn>
+        <button @onclick="() => reorderItem(context.Id)" class="btn btn-text">reorder</button>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    [Parameter]
+    public bool ShowReplenish {get;set;} = false;
+
+    [Parameter]
+    public int ShowTop {get;set;} = 0;
+
+    private List<HardwareItem>? hardwareItems;
+
+    private IQueryable<HardwareItem> results = Enumerable.Empty<HardwareItem>().AsQueryable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshData();
+    }
+
+    private async Task RefreshData()
+    {
+        hardwareItems = await hardwareItemRepo.GetAllAsync();
+        if(ShowReplenish)
+        {
+            hardwareItems = hardwareItems.Where(o => o.Quantity <= o.ReorderThreshold).Take(10).ToList();
+        }
+
+        if(ShowTop > 0)
+        {
+            hardwareItems = hardwareItems.Take(10).ToList();
+        }
+        results = hardwareItems.AsQueryable();
+    }
+
+    protected void reorderItem(int id)
+    {
+        //redirect to reorder page
+        NavManager.NavigateTo($"/Reorder?id={id}");
+    }
+    protected void editItem()
+    {
+
+    }
+
+    protected async Task decreaseQuantity(int id)
+    {
+        var quantity = await JS.InvokeAsync<string>("prompt", "How many items did you use?", 0);
+        if(quantity is not null && int.TryParse(quantity, out var quantityInt))
+        {
+            await hardwareItemRepo.DecreaseQuantity(id, quantityInt);
+            await RefreshData();
+            await InvokeAsync(StateHasChanged);
+        }
+
+    }
+
+}

@@ -9,11 +9,11 @@ public partial class OrderHistory
 
     public DateOnly OrderDate { get; set; }
 
-    public int? FulfillmentDate { get; set; }
-
     public int OrderQuantity { get; set; }
 
     public int HardwareItemId { get; set; }
+
+    public DateOnly? FulfillmentDate { get; set; }
 
     public decimal? OrderPrice { get; set; }
 

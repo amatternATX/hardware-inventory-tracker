@@ -1,61 +1,23 @@
 @page "/inventory"
-@using System.Net.Http.Headers
-@using Azure
+@using HardwareInventoryTracker_App.Components.Blocks
 @using HardwareInventoryTracker_App.Models
-@using Microsoft.AspNetCore.Components.QuickGrid
-@using Microsoft.EntityFrameworkCore
-@using Microsoft.EntityFrameworkCore.Internal
-@inject IDbContextFactory<HardwareInventoryManagerContext> DbFactory
-@inject NavigationManager NavManager;
 
 @rendermode InteractiveServer
 
 <h1>Current Inventory</h1>
-<button @onclick="addNewItem" >Add New Item</button>
+<button @onclick="addNewItem" class="btn btn-sm btn-primary" ><span aria-hidden="true">+</span> New Item</button>
 
 
- <QuickGrid Items="results" class="table">
-    <PropertyColumn Property="p => p.Id" Sortable="false"></PropertyColumn>
-    <PropertyColumn Property="p => p.Name" Sortable="true"></PropertyColumn>
-    <PropertyColumn Property="p => p.Category.CategoryName" Sortable="true" Title="Category Name"></PropertyColumn>
-    <TemplateColumn Title="Quantity">
-        <span class="@(context.Quantity < context.ReorderThreshold ? "text-danger" : "")">
-            @context.Quantity
-        </span>
-    </TemplateColumn>
-    <TemplateColumn>
-        <button @onclick="() => reorderItem(context.Id)"></button>
-    </TemplateColumn>
-</QuickGrid>
+ <InventoryList />
 
 @code {
-    private List<HardwareItem>? hardwareItems;
+    
 
-    private IQueryable<HardwareItem> results = Enumerable.Empty<HardwareItem>().AsQueryable();
-
-    protected override async Task OnInitializedAsync()
-    {
-        using var context = DbFactory.CreateDbContext();
-        hardwareItems = await context.HardwareItems.AsNoTracking().Include(i => i.Category).ToListAsync();
-
-        results = hardwareItems.AsQueryable();
-    }
-    protected void addNewItem()
+ protected void addNewItem()
     {
         //redirect to new item editor
     }
-
-
-    protected void editItem()
-    {
-        
-    }
-
-    protected void reorderItem(int id)
-    {
-        //redirect to reorder page
-        NavManager.NavigateTo($"/Reorder?id={id}");
-    }
+   
 
 
 }

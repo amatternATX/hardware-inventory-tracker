@@ -35,6 +35,10 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/Components/Blocks/InventoryList.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9CbG9ja3MvSW52ZW50b3J5TGlzdC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/Components/Blocks/OrderList.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9CbG9ja3MvT3JkZXJMaXN0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

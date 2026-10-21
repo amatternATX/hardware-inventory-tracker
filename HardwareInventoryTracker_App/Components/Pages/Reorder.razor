@@ -1,36 +1,45 @@
 @page "/Reorder"
 @rendermode InteractiveServer
 
+@using HardwareInventoryTracker_App.Components.Blocks
 @using HardwareInventoryTracker_App.Models
 @using Microsoft.EntityFrameworkCore
+@inject OrderHistoryRepo orderHistoryRepo
+
+
 @inject IDbContextFactory<HardwareInventoryManagerContext> DbFactory
 @inject NavigationManager NavManager
 
-@if(item is not null) {
-<h1>Reorder for Item @item.Name</h1>
-<div>@item.Category.CategoryName</div>
-<div><img src="@item.ProductImageUrl" class="image-thumbnail" /></div>
-<div><a href=@item.ReorderLink" target="_blank">click to order</a></div>
-<div>Suggested order is @item.SuggestedOrder units</div>
-}
 
-@if(openOrders?.Count > 0)
+@if (item is not null)
 {
-    <div class="text-danger">There @(openOrders.Count == 1 ? "is" : "are") @openOrders.Count open order@(openOrders.Count == 1 ? "" : "s"), would you like to fulfill one?</div>
-    <div>show open order list</div>
+    <h1>Reorder for Item @item.Name</h1>
+    <div>@item.Category.CategoryName</div>
+    <div><img src="@item.ProductImageUrl" class="image-thumbnail" width="100" /></div>
+    <div><a href=@item.ReorderLink" target="_blank">click to order</a></div>
+    <div>Suggested order is @item.SuggestedOrder units (@item.PackageQuantitiy pieces per unit)</div>
+    <div>Current Inventory is <strong>@item.Quantity</strong></div>
 }
 
-<div>Units ordered: <input type="number" @bind="unitsOrdered" @bind:event="oninput" min="1" /> </div>
-<div>Cost per unit: <input type="decimal" @bind="cost" @bind:event="oninput" /> </div>
-<div>Total: @TotalCost</div>
+@if (openOrders?.Count > 0)
+{
+    <div class="text-danger">There @(openOrders.Count == 1 ? "is" : "are") @openOrders.Count open order@(openOrders.Count ==
+                            1 ? "" : "s"), would you like to fulfill one?</div>
+        <OrderList HardwareItemId="id" ShowOpenOrders="true" />
+    }
 
-<button class="btn btn-primary" @onclick="createOrder">Create order</button>
+    <div>Units ordered: <input type="number" @bind="unitsOrdered" @bind:event="oninput" min="1" /> </div>
+    <div>Cost per unit (USD): <input type="number" step="0.01" placeholder="0.00" @bind="cost" @bind:event="oninput" />
+    </div>
+    <div>Total (USD): @TotalCost</div>
+
+    <button class="btn btn-primary" @onclick="createOrder">Create order</button>
 
 @code {
 
-        [Parameter]
-        [SupplyParameterFromQuery]
-        public int? id {get;set;}
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? id { get; set; }
     private HardwareItem? item;
     private IList<OrderHistory>? openOrders;
 
@@ -39,15 +48,22 @@
     
     protected override async Task OnInitializedAsync()
     {
-        using (var context = DbFactory.CreateDbContext()) {
+        using (var context = DbFactory.CreateDbContext())
+        {
             item = await context.HardwareItems.Include(i => i.Category).Where(i => i.Id == id).FirstOrDefaultAsync();
-            openOrders = await context.OrderHistories.Where(o => o.HardwareItemId == id && o.FulfillmentDate.HasValue == false).ToListAsync();
+            
+        
+        
         }
 
-    }  
+        var orderHistory = await orderHistoryRepo.GetAllAsync();
+        openOrders = orderHistory.Where(o => o.HardwareItemId == id && o.FulfillmentDate is null).ToList();
+    }
 
-    protected decimal TotalCost {
-        get {
+    protected decimal TotalCost
+    {
+        get
+        {
             return cost * unitsOrdered;
         }
     }
@@ -55,8 +71,7 @@
     protected async Task createOrder()
     {
         //check other fields - needs form validation
-        if(id.HasValue) {
-        using (var context = DbFactory.CreateDbContext())
+        if (id.HasValue)
         {
             var order = new OrderHistory()
             {
@@ -67,11 +82,8 @@
                 OrderTotal = TotalCost
             };
 
-            await context.OrderHistories.AddAsync(order);
-            await context.SaveChangesAsync();
-
+            await orderHistoryRepo.AddAsync(order);
             NavManager.NavigateTo("/ordermanager");
-        }
         }
     }
 }
