@@ -3,29 +3,32 @@
 @inject OrderHistoryRepo orderHistoryRepo
 @rendermode InteractiveServer
 
-@if(orderResults.Any())
+@if (orderResults.Any())
 {
-    
+    <QuickGrid Items="orderResults" class="table table-striped table-sm" Pagination="pagination">
+        <PropertyColumn Property="p => p.OrderDate" Sortable="true" Title="Order Date" />
+        <PropertyColumn Property="p => p.HardwareItem.Name" Sortable="true" Title="Name" />
+        <PropertyColumn Property="p => p.OrderQuantity" Sortable="true" Title="Units Ordered" />
+        <PropertyColumn Property="p => p.OrderPrice" Sortable="true" Title="Unit Price" />
+        <PropertyColumn Property="p => p.OrderTotal" Sortable="true" Title="Order Total" />
+        <TemplateColumn Title="Fulfillment Date">
+            @if (context.FulfillmentDate.HasValue)
+            {
+                @context.FulfillmentDate.ToString()
+            }
+            else
+            {
+                <span class="text-info">OPEN</span> <a role="button" class="btn-link btn-sm text-black" @onclick="() => fulfillOrder(context.Id)">fulfill</a>
+            }
 
-<QuickGrid Items="orderResults">
-    <PropertyColumn Property="p => p.OrderDate" Sortable="true" Title="Order Date" />
-    <PropertyColumn Property="p => p.HardwareItem.Name" Sortable="true" Title="Name" />
-    <PropertyColumn Property="p => p.OrderQuantity" Sortable="true" Title="Units Ordered" />
-    <PropertyColumn Property="p => p.OrderPrice" Sortable="true" Title="Unit Price" />
-    <PropertyColumn Property="p => p.OrderTotal" Sortable="true" Title="Order Total" />
-    <TemplateColumn Title="Fulfillment Date">
-        @if (context.FulfillmentDate.HasValue)
-        {
-            @context.FulfillmentDate.ToString()
-        }
-        else
-        {
-            <button class="btn btn-text" @onclick="() => fulfillOrder(context.Id)">fulfill</button>
-        }
-
-    </TemplateColumn>
-</QuickGrid>
-} else
+        </TemplateColumn>
+    </QuickGrid>
+    @if (pagination.TotalItemCount > pagination.ItemsPerPage)
+    {
+        <Paginator State="pagination" />
+    }
+}
+else
 {
     <div><strong>no results found.</strong></div>
 }
@@ -37,10 +40,12 @@
     [Parameter]
     public bool ShowOpenOrders { get; set; } = false;
     [Parameter]
-    public int ShowTop {get;set;} = 0;
+    public int ShowTop { get; set; } = 0;
 
     private List<OrderHistory> orders = new List<OrderHistory>();
     private IQueryable<OrderHistory> orderResults = Enumerable.Empty<OrderHistory>().AsQueryable();
+
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
     protected override async Task OnInitializedAsync()
     {
@@ -51,17 +56,17 @@
     {
         var ordersTemp = (await orderHistoryRepo.GetAllAsync()).ToAsyncEnumerable();
 
-        if(ShowOpenOrders)
+        if (ShowOpenOrders)
         {
             ordersTemp = ordersTemp.Where(o => o.FulfillmentDate.HasValue == false);
         }
 
-        if(HardwareItemId.HasValue)
+        if (HardwareItemId.HasValue)
         {
             ordersTemp = ordersTemp.Where(o => o.HardwareItemId == HardwareItemId);
         }
 
-        if(ShowTop > 0)
+        if (ShowTop > 0)
         {
             ordersTemp = ordersTemp.Take(ShowTop);
         }

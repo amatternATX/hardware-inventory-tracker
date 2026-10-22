@@ -6,34 +6,53 @@
 
 @rendermode InteractiveServer
 
-<QuickGrid Items="results" class="table table-striped table-sm">
+<QuickGrid Items="FilterCategory" class="table table-striped table-sm" Pagination="pagination">
     <PropertyColumn Property="p => p.Name" Sortable="true"></PropertyColumn>
-    <PropertyColumn Property="p => p.Category.CategoryName" Sortable="true" Title="Category Name"></PropertyColumn>
+    <PropertyColumn Property="p => p.Category.CategoryName" Sortable="true" Title="Category Name">
+        <ColumnOptions>
+            <select @bind="categoryFilter" @bind:event="onchange" @bind:after="resetPage">
+                <option value="">clear filter</option>
+                @foreach (var categoryName in categoryNames)
+                {
+                    <option value="@categoryName">@categoryName</option>
+                }
+            </select>
+        </ColumnOptions>
+
+    </PropertyColumn>
     <TemplateColumn Title="Quantity">
-        <span class="@(context.Quantity < context.ReorderThreshold ? "text-danger" : "")">
+        <span class="@(context.Quantity <= context.ReorderThreshold ? "text-danger" : "")">
             @context.Quantity
         </span>
-        <button role="button" @onclick="() => decreaseQuantity(context.Id)" class="btn btn-text"> use </button>
+        <button role="button" @onclick="() => decreaseQuantity(context.Id)" class="btn btn-link btn-sm text-black"> use </button>
     </TemplateColumn>
     <TemplateColumn>
-        <button @onclick="() => editItem(context.Id)" class="btn btn-text">edit</button>
+        <a role="button" @onclick="() => editItem(context.Id)" class="btn btn-link btn-sm text-black">edit</a>
     </TemplateColumn>
     <TemplateColumn>
-        <button @onclick="() => reorderItem(context.Id)" class="btn btn-text">reorder</button>
+        <a role="button" @onclick="() => reorderItem(context.Id)" class="btn btn-link btn-sm text-black">reorder</a>
     </TemplateColumn>
 </QuickGrid>
+@if(pagination.TotalItemCount > pagination.ItemsPerPage) {
+    <Paginator State="pagination"/>    
+}
 
 @code {
     [Parameter]
-    public bool ShowReplenish {get;set;} = false;
+    public bool ShowReplenish { get; set; } = false;
 
     [Parameter]
-    public int ShowTop {get;set;} = 0;
+    public int ShowTop { get; set; } = 0;
 
     private List<HardwareItem>? hardwareItems;
 
     private IQueryable<HardwareItem> results = Enumerable.Empty<HardwareItem>().AsQueryable();
 
+    private string categoryFilter = string.Empty;
+
+    private List<string?> categoryNames = new();
+
+    private PaginationState pagination = new PaginationState{ ItemsPerPage = 10 };
     protected override async Task OnInitializedAsync()
     {
         await RefreshData();
@@ -42,12 +61,12 @@
     private async Task RefreshData()
     {
         hardwareItems = await hardwareItemRepo.GetAllAsync();
-        if(ShowReplenish)
+        if (ShowReplenish)
         {
             hardwareItems = hardwareItems.Where(o => o.Quantity <= o.ReorderThreshold).Take(10).ToList();
         }
 
-        if(ShowTop > 0)
+        if (ShowTop > 0)
         {
             hardwareItems = hardwareItems.Take(10).ToList();
         }
@@ -67,7 +86,7 @@
     protected async Task decreaseQuantity(int id)
     {
         var quantity = await JS.InvokeAsync<string>("prompt", "How many items did you use?", 0);
-        if(quantity is not null && int.TryParse(quantity, out var quantityInt))
+        if (quantity is not null && int.TryParse(quantity, out var quantityInt))
         {
             await hardwareItemRepo.DecreaseQuantity(id, quantityInt);
             await RefreshData();
@@ -76,4 +95,23 @@
 
     }
 
+    protected IQueryable<HardwareItem> FilterCategory
+    {
+        get
+        {
+            var query = results;
+            if (string.IsNullOrWhiteSpace(categoryFilter) == false)
+            {
+                query = query.Where(p => p.Category.CategoryName == categoryFilter);
+
+            }
+
+            //create available category list;
+            categoryNames = query.Select(i => i.Category.CategoryName).Where(c => c != null).Distinct().OrderBy(c => c).ToList();
+            
+            return query;
+        }
+    }
+
+    private Task resetPage() => pagination.SetCurrentPageIndexAsync(0);
 }
