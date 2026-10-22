@@ -20,7 +20,7 @@ class HardwareItemRepo : IRepository<HardwareItem>
     public async Task<HardwareItem?> GetByIdAsync(int id)
     {
         using var dbContext = _dbFactory.CreateDbContext();
-        return await dbContext.HardwareItems.Include(o => o.OrderHistories).Where(i => i.Id == id).FirstOrDefaultAsync();
+        return await dbContext.HardwareItems.Include(o => o.OrderHistories).Include(c => c.Category).Where(i => i.Id == id).FirstOrDefaultAsync();
     }
 
     public async Task DeleteAsync(HardwareItem item)
@@ -37,9 +37,23 @@ class HardwareItemRepo : IRepository<HardwareItem>
     public async Task<HardwareItem> UpdateAsync(HardwareItem item)
     {
         using var dbContext = _dbFactory.CreateDbContext();
-        await dbContext.HardwareItems.AddAsync(item);
+        var existingItem = await dbContext.HardwareItems.FirstOrDefaultAsync(i => i.Id == item.Id);
+        if (existingItem is null)
+        {
+            throw new KeyNotFoundException($"Hardware item with ID {item.Id} was not found.");
+        }
+
+        existingItem.Name = item.Name;
+        existingItem.Description = item.Description;
+        existingItem.CategoryId = item.CategoryId;
+        existingItem.PackageQuantitiy = item.PackageQuantitiy;
+        existingItem.SuggestedOrder = item.SuggestedOrder;
+        existingItem.ReorderThreshold = item.ReorderThreshold;
+        existingItem.ReorderLink = item.ReorderLink;
+        existingItem.ProductImageUrl = item.ProductImageUrl;
+        existingItem.Quantity = item.Quantity;
         await dbContext.SaveChangesAsync();
-        return item;
+        return existingItem;
 
     }
 
