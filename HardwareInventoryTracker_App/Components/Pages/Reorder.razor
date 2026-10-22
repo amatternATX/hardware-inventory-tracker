@@ -1,31 +1,30 @@
-@page "/Reorder"
+@page "/Reorder/{hardwareItemId:int?}"
 @rendermode InteractiveServer
 
 @using HardwareInventoryTracker_App.Components.Blocks
 @using HardwareInventoryTracker_App.Models
-@using Microsoft.EntityFrameworkCore
+
 @inject OrderHistoryRepo orderHistoryRepo
+@inject HardwareItemRepo hardwareItemRepo
 
-
-@inject IDbContextFactory<HardwareInventoryManagerContext> DbFactory
 @inject NavigationManager NavManager
 
 
-@if (item is not null)
+@if (hardwareItem is not null)
 {
-    <h1>Reorder for Item @item.Name</h1>
-    <div>@item.Category.CategoryName</div>
-    <div><img src="@item.ProductImageUrl" class="image-thumbnail" width="100" /></div>
-    <div><a href=@item.ReorderLink" target="_blank">click to order</a></div>
-    <div>Suggested order is @item.SuggestedOrder units (@item.PackageQuantitiy pieces per unit)</div>
-    <div>Current Inventory is <strong>@item.Quantity</strong></div>
+    <h1>Reorder for Item @hardwareItem.Name</h1>
+    <div>@hardwareItem.Category.CategoryName</div>
+    <div><img src="@hardwareItem.ProductImageUrl" class="image-thumbnail" width="100" /></div>
+    <div><a href=@hardwareItem.ReorderLink" target="_blank">click to order</a></div>
+    <div>Suggested order is @hardwareItem.SuggestedOrder units (@hardwareItem.PackageQuantitiy pieces per unit)</div>
+    <div>Current Inventory is <strong>@hardwareItem.Quantity</strong></div>
 }
 
 @if (openOrders?.Count > 0)
 {
     <div class="text-danger">There @(openOrders.Count == 1 ? "is" : "are") @openOrders.Count open order@(openOrders.Count ==
                             1 ? "" : "s"), would you like to fulfill one?</div>
-        <OrderList HardwareItemId="id" ShowOpenOrders="true" />
+        <OrderList HardwareItemId="hardwareItemId" ShowOpenOrders="true" />
     }
 
     <div>Units ordered: <input type="number" @bind="unitsOrdered" @bind:event="oninput" min="1" /> </div>
@@ -38,9 +37,8 @@
 @code {
 
     [Parameter]
-    [SupplyParameterFromQuery]
-    public int? id { get; set; }
-    private HardwareItem? item;
+    public int? hardwareItemId { get; set; }
+    private HardwareItem? hardwareItem;
     private IList<OrderHistory>? openOrders;
 
     private int unitsOrdered = 0;
@@ -48,16 +46,12 @@
     
     protected override async Task OnInitializedAsync()
     {
-        using (var context = DbFactory.CreateDbContext())
-        {
-            item = await context.HardwareItems.Include(i => i.Category).Where(i => i.Id == id).FirstOrDefaultAsync();
-            
+        if(hardwareItemId is not null) {
+            hardwareItem = await hardwareItemRepo.GetByIdAsync(hardwareItemId.Value);
         
-        
+            var orderHistory = await orderHistoryRepo.GetAllAsync();
+            openOrders = orderHistory.Where(o => o.HardwareItemId == hardwareItemId && o.FulfillmentDate is null).ToList();
         }
-
-        var orderHistory = await orderHistoryRepo.GetAllAsync();
-        openOrders = orderHistory.Where(o => o.HardwareItemId == id && o.FulfillmentDate is null).ToList();
     }
 
     protected decimal TotalCost
@@ -71,11 +65,11 @@
     protected async Task createOrder()
     {
         //check other fields - needs form validation
-        if (id.HasValue)
+        if (hardwareItemId.HasValue)
         {
             var order = new OrderHistory()
             {
-                HardwareItemId = id.Value,
+                HardwareItemId = hardwareItemId.Value,
                 OrderDate = DateOnly.FromDateTime(DateTime.Now),
                 OrderQuantity = unitsOrdered,
                 OrderPrice = cost,
