@@ -4,6 +4,8 @@
 
 @rendermode InteractiveServer
 
+@inject NavigationManager NavManager
+<PageTitle>Inventory</PageTitle>
 <h1>Current Inventory</h1>
 <button @onclick="addNewItem" class="btn btn-sm btn-primary" ><span aria-hidden="true">+</span> New Item</button>
 
@@ -15,7 +17,7 @@
 
  protected void addNewItem()
     {
-        //redirect to new item editor
+     NavManager.NavigateTo("/hardwareitem/edit");
     }
    
 

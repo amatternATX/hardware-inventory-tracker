@@ -1,0 +1,254 @@
+@page "/hardwareitem/edit"
+@page "/hardwareitem/edit/{HardwareItemId:int}"
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using HardwareInventoryTracker_App.Models
+
+@inject HardwareItemRepo HardwareItemRepo
+@inject CategoryRepo CategoryRepo
+@inject ProductQuantityScraper ProductQuantityScraper
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<h1>@(HardwareItemId.HasValue ? "Edit Hardware Item" : "Create Hardware Item")</h1>
+
+@if (loadError is not null)
+{
+    <div class="alert alert-danger" role="alert">@loadError</div>
+}
+else if (categories is not null)
+{
+    <EditForm Model="formModel" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label" for="name">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="formModel.Name" />
+            <ValidationMessage For="() => formModel.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="category">Category</label>
+            <div class="d-flex gap-2">
+                <InputSelect id="category" class="form-select" @bind-Value="formModel.CategoryId">
+                    <option value="0">Select a category</option>
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.Id">@category.CategoryName</option>
+                    }
+                </InputSelect>
+                <button type="button" class="btn btn-outline-secondary text-nowrap" @onclick="AddCategoryAsync">
+                    Add category
+                </button>
+            </div>
+            <ValidationMessage For="() => formModel.CategoryId" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="description">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="formModel.Description" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="reorder-link">Reorder link</label>
+            <InputText id="reorder-link" class="form-control" @bind-Value="formModel.ReorderLink"
+                       @bind-Value:after="LookupPackageQuantityAsync" />
+            <ValidationMessage For="() => formModel.ReorderLink" />
+            @if (packageQuantityLookupMessage is not null)
+            {
+                <div class="form-text" role="status">@packageQuantityLookupMessage</div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="product-image-url">Product image URL</label>
+            <InputText id="product-image-url" class="form-control" @bind-Value="formModel.ProductImageUrl" />
+            <ValidationMessage For="() => formModel.ProductImageUrl" />
+            @if (!string.IsNullOrWhiteSpace(formModel.ProductImageUrl))
+            {
+                <img src="@formModel.ProductImageUrl" alt="Product image preview" class="img-thumbnail mt-2"
+                     style="max-width: 200px; max-height: 200px; object-fit: contain;" />
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="package-quantity">Package quantity</label>
+            <InputNumber id="package-quantity" class="form-control" @bind-Value="formModel.PackageQuantity" />
+            <ValidationMessage For="() => formModel.PackageQuantity" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="suggested-reorder">Suggested reorder quantity</label>
+            <InputNumber id="suggested-reorder" class="form-control" @bind-Value="formModel.SuggestedOrder" />
+            <ValidationMessage For="() => formModel.SuggestedOrder" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="reorder-threshold">Reorder threshold</label>
+            <InputNumber id="reorder-threshold" class="form-control" @bind-Value="formModel.ReorderThreshold" />
+            <ValidationMessage For="() => formModel.ReorderThreshold" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="quantity">Current stock quantity</label>
+            <InputNumber id="quantity" class="form-control" @bind-Value="formModel.Quantity" />
+            <ValidationMessage For="() => formModel.Quantity" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int? HardwareItemId { get; set; }
+
+    private List<Category>? categories;
+    private HardwareItem? existingItem;
+    private string? loadError;
+    private string? packageQuantityLookupMessage;
+    private HardwareItemFormModel formModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await CategoryRepo.GetAllAsync();
+
+        if (HardwareItemId is int id)
+        {
+            existingItem = await HardwareItemRepo.GetByIdAsync(id);
+            if (existingItem is null)
+            {
+                loadError = $"Hardware item with ID {id} was not found.";
+                return;
+            }
+
+            formModel = new HardwareItemFormModel
+            {
+                Name = existingItem.Name ?? string.Empty,
+                Description = existingItem.Description ?? string.Empty,
+                ReorderLink = existingItem.ReorderLink ?? string.Empty,
+                ProductImageUrl = existingItem.ProductImageUrl ?? string.Empty,
+                PackageQuantity = existingItem.PackageQuantitiy,
+                SuggestedOrder = existingItem.SuggestedOrder,
+                ReorderThreshold = existingItem.ReorderThreshold ?? 0,
+                Quantity = existingItem.Quantity,
+                CategoryId = existingItem.CategoryId
+            };
+        }
+    }
+
+    private async Task AddCategoryAsync()
+    {
+        var name = await JS.InvokeAsync<string?>("prompt", "Enter a category name:");
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        var category = await CategoryRepo.AddAsync(new Category
+        {
+            CategoryName = name.Trim()
+        });
+
+        categories = await CategoryRepo.GetAllAsync();
+        formModel.CategoryId = category.Id;
+    }
+
+    private async Task LookupPackageQuantityAsync()
+    {
+        if (string.IsNullOrWhiteSpace(formModel.ReorderLink))
+        {
+            packageQuantityLookupMessage = null;
+            return;
+        }
+
+        packageQuantityLookupMessage = "Looking for a package quantity...";
+        var result = await ProductQuantityScraper.FindAsync(formModel.ReorderLink);
+        if (result.Quantity is int quantity)
+        {
+            formModel.PackageQuantity = quantity;
+        }
+
+        packageQuantityLookupMessage = result.Message;
+    }
+
+    private async Task SaveAsync()
+    {
+        var packageQuantity = formModel.PackageQuantity
+            ?? throw new InvalidOperationException("Package quantity is required.");
+        var suggestedOrder = formModel.SuggestedOrder
+            ?? throw new InvalidOperationException("Suggested reorder quantity is required.");
+        var reorderThreshold = formModel.ReorderThreshold
+            ?? throw new InvalidOperationException("Reorder threshold is required.");
+        var quantity = formModel.Quantity
+            ?? throw new InvalidOperationException("Current stock quantity is required.");
+        var categoryId = formModel.CategoryId
+            ?? throw new InvalidOperationException("A category is required.");
+
+        var item = existingItem ?? new HardwareItem();
+        item.Name = formModel.Name.Trim();
+        item.Description = formModel.Description.Trim();
+        item.ReorderLink = formModel.ReorderLink.Trim();
+        item.ProductImageUrl = formModel.ProductImageUrl.Trim();
+        item.PackageQuantitiy = packageQuantity;
+        item.SuggestedOrder = suggestedOrder;
+        item.ReorderThreshold = reorderThreshold;
+        item.Quantity = quantity;
+        item.CategoryId = categoryId;
+
+        if (existingItem is null)
+        {
+            await HardwareItemRepo.AddAsync(item);
+        }
+        else
+        {
+            await HardwareItemRepo.UpdateAsync(item);
+        }
+
+        Navigation.NavigateTo("/inventory");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/inventory");
+    }
+
+    private sealed class HardwareItemFormModel
+    {
+        [Required]
+        public string Name { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        [Required]
+        [Url]
+        public string ReorderLink { get; set; } = string.Empty;
+
+        [Required]
+        [Url]
+        public string ProductImageUrl { get; set; } = string.Empty;
+
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int? PackageQuantity { get; set; } = 1;
+
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int? SuggestedOrder { get; set; } = 1;
+
+        [Required]
+        [Range(0, int.MaxValue)]
+        public int? ReorderThreshold { get; set; } = 0;
+
+        [Required]
+        [Range(0, int.MaxValue)]
+        public int? Quantity { get; set; } = 0;
+
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int? CategoryId { get; set; }
+    }
+}

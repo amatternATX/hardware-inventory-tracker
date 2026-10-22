@@ -16,6 +16,9 @@
         <button role="button" @onclick="() => decreaseQuantity(context.Id)" class="btn btn-text"> use </button>
     </TemplateColumn>
     <TemplateColumn>
+        <button @onclick="() => editItem(context.Id)" class="btn btn-text">edit</button>
+    </TemplateColumn>
+    <TemplateColumn>
         <button @onclick="() => reorderItem(context.Id)" class="btn btn-text">reorder</button>
     </TemplateColumn>
 </QuickGrid>
@@ -51,14 +54,14 @@
         results = hardwareItems.AsQueryable();
     }
 
-    protected void reorderItem(int id)
+    protected void reorderItem(int hardwareItemId)
     {
         //redirect to reorder page
-        NavManager.NavigateTo($"/Reorder?id={id}");
+        NavManager.NavigateTo($"/Reorder/{hardwareItemId}");
     }
-    protected void editItem()
+    protected void editItem(int id)
     {
-
+        NavManager.NavigateTo($"/hardwareitem/edit/{id}");
     }
 
     protected async Task decreaseQuantity(int id)

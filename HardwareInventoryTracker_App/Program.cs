@@ -13,6 +13,9 @@ builder.Services.AddDbContextFactory<HardwareInventoryManagerContext>(options =>
 
 builder.Services.AddScoped<OrderHistoryRepo>();
 builder.Services.AddScoped<HardwareItemRepo>();
+builder.Services.AddScoped<CategoryRepo>();
+builder.Services.AddHttpClient<ProductQuantityScraper>(client => client.Timeout = TimeSpan.FromSeconds(10))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 
 var app = builder.Build();
 
