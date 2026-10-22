@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HardwareInventoryTracker_App")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+20831c430eabaec55bee92d68f7a0c28176fda26")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0c5d07f412c1a03d1c14239f69401bebed17f4c7")]
 [assembly: System.Reflection.AssemblyProductAttribute("HardwareInventoryTracker_App")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HardwareInventoryTracker_App")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
