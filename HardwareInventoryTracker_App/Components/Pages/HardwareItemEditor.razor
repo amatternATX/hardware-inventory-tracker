@@ -25,7 +25,7 @@ else if (categories is not null)
 
         <div class="mb-3">
             <label class="form-label" for="name">Name</label>
-            <InputText id="name" class="form-control" @bind-Value="formModel.Name" />
+            <InputText id="name" class="form-control" @bind-Value="formModel.Name"></InputText>
             <ValidationMessage For="() => formModel.Name" />
         </div>
 

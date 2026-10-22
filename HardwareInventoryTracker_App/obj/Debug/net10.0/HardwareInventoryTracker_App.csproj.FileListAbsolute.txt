@@ -23,7 +23,6 @@
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/scopedcss/Components/Layout/ReconnectModal.razor.rz.scp.css
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/scopedcss/bundle/HardwareInventoryTracker_App.styles.css
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/scopedcss/projectbundle/HardwareInventoryTracker_App.bundle.scp.css
-/Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/compressed/aezoivpakj-{0}-khy4lop6wu-khy4lop6wu.gz
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/compressed/0kyj9hs2mz-{0}-bqjiyaj88i-bqjiyaj88i.gz
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/compressed/rwt86u4dyv-{0}-c2jlpeoesf-c2jlpeoesf.gz
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/compressed/z5d54qnwgp-{0}-erw9l3u2r3-erw9l3u2r3.gz
@@ -221,3 +220,4 @@
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/compressed/jng2e1ty92-{0}-g9w2un1bf5-g9w2un1bf5.gz
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/Hardware.7B5426CC.Up2Date
 /Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/HardwareInventoryTracker_App.sourcelink.json
+/Users/alanmattern/repo/hardware-inventory-tracker/HardwareInventoryTracker_App/obj/Debug/net10.0/compressed/aezoivpakj-{0}-dznf6sg6ed-dznf6sg6ed.gz
